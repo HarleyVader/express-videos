@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "ejs": "^3.1.9",
+    "express": "^4.19.2",
+    "mongodb": "^6.5.0"
+  },
+  "name": "express-videos",
+  "version": "0.0.1",
+  "description": "melkaneas 4th attempt at express",
+  "main": "app.js",
+  "scripts": {
+    "test": "node app.js"
+  },
+  "author": "melkanea",
+  "license": "ISC"
+}
