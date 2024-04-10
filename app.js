@@ -1,82 +1,93 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const MongoClient = require('mongodb').MongoClient;
+const mongoose = require('mongoose');
 
 const app = express();
 const port = 6969;
 
 // Connect to MongoDB
-MongoClient.connect('mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.2.1', (err, client) => {
-    if (err) {
-        console.error('Failed to connect to MongoDB:', err);
-        return;
-    }
+mongoose.connect('mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.2.3')
+    .then(async () => {
+        const db = mongoose.connection;
 
-    const db = client.db('videos');
+        app.use(express.json()); // for parsing application/json
+        app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
-    // Read directory tree and create database
-    function readDirectoryTree(location) {
-        const tree = {};
+        // Define your routes here
+        app.get('/', (req, res) => {
+            res.send('Hello World!');
+        });
 
-        function traverseDirectory(currentPath, currentLevel) {
-            const files = fs.readdirSync(currentPath);
+        // Read directory tree and create database
+        async function readDirectoryTree(location) {
+            const tree = {};
 
-            files.forEach((file) => {
-                const filePath = path.join(currentPath, file);
-                const stats = fs.statSync(filePath);
+            function traverseDirectory(currentPath, currentLevel) {
+                const files = fs.readdirSync(currentPath);
 
-                if (stats.isDirectory()) {
-                    const directoryName = path.basename(filePath);
-                    currentLevel[directoryName] = {};
-                    traverseDirectory(filePath, currentLevel[directoryName]);
-                } else {
-                    const fileName = path.basename(filePath);
-                    currentLevel[fileName] = { URL: '' };
-                }
-            });
+                files.forEach((file) => {
+                    const filePath = path.join(currentPath, file);
+                    const stats = fs.statSync(filePath);
+
+                    if (stats.isDirectory()) {
+                        const directoryName = path.basename(filePath);
+                        currentLevel[directoryName] = {};
+                        traverseDirectory(filePath, currentLevel[directoryName]);
+                    } else {
+                        const fileName = path.basename(currentPath); // Use folder name as file name
+                        currentLevel[fileName] = { URL: '' };
+                    }
+                });
+            }
+
+            traverseDirectory(location, tree);
+
+            // Insert tree structure into MongoDB
+            await db.collection('directoryTree').insertOne(tree);
+            console.log('Directory tree inserted into MongoDB');
         }
 
-        traverseDirectory(location, tree);
+        app.post('/submit', async (req, res) => {
 
-        // Insert tree structure into MongoDB
-        db.collection('directoryTree').insertOne(tree, (err, result) => {
-            if (err) {
-                console.error('Failed to insert directory tree into MongoDB:', err);
-                return;
+            const folderName = req.body.folderName;
+            const fileName = req.body.fileName;
+            const url = req.body.url;
+
+            const result = await db.collection('directoryTree').findOne({ [folderName]: { $exists: true } });
+
+            if (result) {
+                result[folderName][fileName].URL = url;
+                await db.collection('directoryTree').updateOne({ _id: result._id }, { $set: { [folderName]: result[folderName] } });
+                res.send('URL added successfully!');
+            } else {
+                res.status(404).send('Folder not found!');
             }
-
-            console.log('Directory tree inserted into MongoDB');
         });
-    }
 
-    app.set('view engine', 'ejs');
-    app.set('views', path.join(__dirname, 'views'));
-    
-    
-    // Step 4: In the `renderView` function, render the new EJS file
-    function renderView() {
-        db.collection('directoryTree').findOne({}, (err, result) => {
-            if (err) {
-                console.error('Failed to fetch directory tree from MongoDB:', err);
-                return;
-            }
-    
-            // Step 5: Pass the location data from the database to the EJS file
-            const location = result ? result.location : '';
-            const counter = result ? result.counter : 0; // Assuming the counter is stored in the database
-    
-            // Step 6: In the EJS file, use the location data to populate the form fields
+        async function renderView(res, folder, subfolder) {
+            // Create a variable path
+            const path = `${folder}.${subfolder}`;
+
+            // Use the variable path to fetch the correct data from the database
+            const result = await db.collection('directoryTree').findOne({ [path]: { $exists: true } });
+
+            // Extract the location and counter from the result
+            const location = result ? result[folder][subfolder].URL : '';
+            const counter = result ? Object.keys(result[folder][subfolder]).length : 0;
+
+            // Render the form with the location and counter
             res.render('form', { location, counter });
+        }
+
+        // Create a route handler that reads the tree and fills in the correct storage path
+        app.get('/:folder/:subfolder?', async (req, res) => {
+            await renderView(res, req.params.folder, req.params.subfolder);
         });
-    }
 
-    // Start the app
-    app.listen(port, () => {
-        console.log(`App listening at http://localhost:${port}`);
-        readDirectoryTree('/videos'); // Replace with your desired directory location
-        renderView();
+        // Start the app
+        app.listen(port, async () => {
+            console.log(`App listening at http://localhost:${port}`);
+            await readDirectoryTree("videos"); // Replace with your desired directory location
+        });
     });
-});
-
-
