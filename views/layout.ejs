@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= data.title %></title>
+	<!-- brandnyette info -->
+	<%- include("../assets/ejs/brandyentte.ejs") %>
+</head>
+
+<body>
+	<!-- header-->
+	<%- include("../assets/ejs/header.ejs") %>
+	<!-- Navbar -->
+	<!-- Navbar -->
+<!-- Navbar -->
+<div class="navbar">
+    <div class="pt-30 categories-list">
+        <div class="row">
+            <div class="col col-12">
+                <div class="card-columns">
+                    <% (Array.isArray(data) ? data : [data]).forEach(folder => { %>
+                    <div class="card-primary col-12 col-sm-3 col-lg-3 mr-auto p-2">
+                        <div class="card-header" id="<%= folder.id %>">
+                            <i class="fa-solid fa-film"></i>
+                            <a title="<%= folder.name %>" href="/<%= folder.id %>">
+                                <h1 class="card-title"><%= folder.name %>
+                                    <div class="pull-right">
+                                        <i class="fa fa-external-link"></i>
+                                    </div>
+                                </h1>
+                            </a>
+                            <% (folder.subfolders || []).forEach(function(subfolder) { %>
+                            <div class="card-block">
+                                <ol>
+                                    <!--Ranking list -->
+                                    <li>
+                                        <!--listed item -->
+                                        <div class="icon">
+                                            <img class="favicon" alt="" src="<%= subfolder.iconSrc %>" width="15px"
+                                                height="15px" />
+                                            <a class="link" href="/<%= folder.id %>/<%= subfolder.id %>"><%= subfolder.name %></a>
+                                            <a title="<%= subfolder.name %>" rel="noopener nofollow" target="_new"
+                                                href="/<%= folder.id %>/<%= subfolder.id %>">
+                                                <i class="fa fa-external-link"></i>
+                                            </a>
+                                        </div>
+                                    </li>
+                                    <!--listed item END-->
+                                </ol>
+                                <!--Ranking list END-->
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                    <% }) %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+			<!-- Brandynette footer-->
+			<%- //include("../assets/ejs/ads.ejs") %>
+			<%- include("../assets/ejs/footer.ejs") %>
+</body>
+
+</html>
+<style>
+	@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@800&display=swap");
+
+	:root {
+		--murrey: #890449ff;
+		--tyrian-purple: #580228ff;
+		--hollywood-cerise: #f40a95ff;
+		--violet-web-color: #e885d3ff;
+		--shocking-pink: #fc34b9ff;
+
+		/* violet sissy (darker) */
+		--murrey: #8a0341;
+		--eminence: #6f1e80ff;
+		--red-violet: #cb1a9eff;
+		--rose-red: #c00150ff;
+		--russian-violet: #4b0e51ff;
+
+		/* neon goth dark but glows */
+		--chocolate-cosmos: #370013ff;
+		--hollywood-cerise: #dd12abff;
+		--black: #04010aff;
+		--sky-blue: #4fcee4ff;
+		--hollywood-cerise-2: #ec00a2ff;
+
+		--color-1: #55cdfc;
+		--color-2: #f7a8b8;
+		/* details */
+		--radius: 2rem;
+		--padding: 1%;
+		--margin: 1%;
+		--padding-2: 0.5rem;
+		--margin-2: 0.5rem;
+	}
+
+	html,
+	body {
+		background-color: rgb(22, 0, 18);
+		font-family: "Kanit", sans-serif;
+		letter-spacing: 1.5px;
+		color: #e74c3c;
+
+	}
+
+	p {
+		color: var(--color-2);
+		font-size: medium;
+	}
+
+	h1 {
+		margin: 1%;
+		padding: 1%;
+		color: var(--color-1);
+	}
+
+	h2 {
+		color: var(--color-2);
+		text-align: left;
+
+	}
+
+	h3 {
+		color: var(--color-1);
+		text-align: left;
+		padding: var(--margin);
+		margin: var(--padding);
+
+	}
+
+	ul {
+		padding: var(--margin);
+		margin: var(--padding);
+
+	}
+
+	ul.no-bullets {
+		list-style-type: none;
+		padding: var(--margin);
+		margin: var(--padding);
+
+	}
+
+	li {
+		list-style-type: none;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--margin);
+		margin: var(--padding);
+		border: 4px;
+		border-style: ridge;
+		border-radius: var(--radius);
+		border-color: rgb(0, 255, 255);
+		background-color: var(--chocolate-cosmos);
+	}
+
+	a {
+		color: var(--hollywood-cerise);
+	}
+
+	a:hover {
+		color: var(--hollywood-cerise-2);
+	}
+
+	#views {
+		margin-right: 1%;
+	}
+
+	.category {
+		font-weight: bold;
+		margin-top: 20px;
+	}
+
+	.website {
+		margin-left: 5px;
+	}
+
+	#timer {
+		color: var(--tyrian-purple);
+	}
+
+	#brandy-landing {
+		color: var(--rose-red);
+	}
+
+	.card-columns {
+		border: 5px;
+		border-color: var(--hollywood-cerise);
+		border-radius: var(--radius);
+		margin: var(--margin);
+		padding: var(--padding);
+	}
+
+	.card-primary {
+		border: 5px;
+		border-color: var(--hollywood-cerise);
+		border-radius: var(--radius);
+		border-style: ridge;
+		margin: var(--margin);
+		padding: var(--padding);
+	}
+
+	.content {
+		max-width: auto;
+		margin: auto;
+		text-align: center;
+		font: bold;
+	}
+
+	#neon-goth-bambi-2 {
+		margin: 2%;
+		padding: 2%;
+		border: solid;
+		border-width: 2px;
+		border-color: rgb(55, 0, 38);
+	}
+
+	.cookie-banner {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		background: #f1f1f1;
+		padding: 10px;
+		text-align: center;
+		box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+	}
+
+	.cookie-banner button {
+		background: #4caf50;
+		color: white;
+		border: none;
+		padding: 10px 20px;
+		text-align: center;
+		text-decoration: none;
+		display: inline-block;
+		font-size: 16px;
+		margin: 4px 2px;
+		cursor: pointer;
+		border-radius: 4px;
+	}
+
+	.decline-btn {
+		background: #e74c3c;
+		color: white;
+		border: none;
+	}
+
+	.protest-riot-regular {
+		font-family: "Protest Riot", sans-serif;
+		font-weight: 400;
+		font-style: normal;
+	}
+
+	#viewCount {
+		color: blueviolet;
+		font-family: "Protest Riot", sans-serif;
+		font-weight: 400;
+		font-style: normal;
+		/*margin: 1%;
+		padding: 1%;*/
+	}
+
+	#banner {
+		text-align: center;
+	}
+
+	.left {
+		text-align: left;
+		padding-left: 1%;
+	}
+
+	.center {
+		text-align: center;
+	}
+
+	.right {
+		text-align: right;
+		padding-right: 1%;
+	}
+
+	.grid-container {
+		display: grid;
+		grid-template-columns: auto auto auto;
+	}
+
+	.container {
+		display: flex;
+	}
+
+	.navbar {
+		width: 15%;
+	}
+
+	.content {
+		width: 85%;
+	}
+</style>

@@ -1,12 +1,13 @@
 {
   "dependencies": {
+    "body-parser": "^1.20.2",
     "ejs": "^3.1.9",
     "express": "^4.19.2",
     "mongodb": "^6.5.0",
     "mongoose": "^8.3.1"
   },
   "name": "express-videos",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "melkaneas 4th attempt at express",
   "main": "app.js",
   "scripts": {
