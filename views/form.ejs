@@ -1,11 +1,16 @@
 <form action="/submit" method="post">
-    <label for="videoName">Video Name:</label><br>
-    <input type="text" id="videoName" name="videoName"><br>
-    <label for="url">URL:</label><br>
-    <input type="text" id="url" name="url"><br>
-    <label for="location">Location:</label><br>
-    <input type="text" id="location" name="location" value="<%= location %>"><br>
-    <label for="counter">Counter:</label><br>
-    <input type="text" id="counter" name="counter" value="<%= counter %>"><br>
-    <input type="submit" value="Submit">
+  <label for="name">Name:</label><br>
+  <input type="text" id="name" name="name"><br>
+  <label for="url">URL:</label><br>
+  <input type="text" id="url" name="url"><br>
+  <input type="submit" value="Submit">
 </form>
+
+<% folders.forEach(folder => { %>
+  <p><%= folder.path %></p>
+  <% if (Array.isArray(folder.subfolders) && folder.subfolders.length > 0) { %>
+    <% folder.subfolders.forEach(subfolder => { %>
+      <p><%= subfolder.subfolderPath %></p>
+    <% }); %>
+  <% } %>
+<% }); %>

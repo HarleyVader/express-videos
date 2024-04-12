@@ -30,6 +30,7 @@ const FolderSchema = new mongoose.Schema({
   ],
 });
 Folder = mongoose.model("Folder", FolderSchema);
+
 async function addTodb(folder) {
     const newFolder = new Folder(folder);
     try {
@@ -38,65 +39,8 @@ async function addTodb(folder) {
     } catch (error) {
       console.error("Error saving folder: ", error);
     }
-  }
-  /*
-function createViewsTree(dirPath, title) {
-  const data = fs
-    .readdirSync(dirPath)
-    .filter((name) => fs.statSync(path.join(dirPath, name)).isDirectory())
-    .map((name) => {
-      const filePath = path.join(dirPath, name);
-      const subfolders = fs
-        .readdirSync(filePath)
-        .filter((name) =>
-          fs.statSync(path.join(filePath, name)).isDirectory()
-        )
-        .map((subfolder) => {
-          const subfolderPath = path.join(filePath, subfolder);
-          return {
-            id: subfolder,
-            name: subfolder,
-            iconSrc: "",
-            subfolderPath: subfolderPath,
-            views: 0,
-          };
-        });
-      const folder = {
-        id: name,
-        name: name,
-        path: filePath,
-        subfolders: subfolders,
-      };
-      addTodb(folder);
-      return folder;
-    });
-  return { title: title, data: data };
 }
-*/
-function createViewsTree(directory, title) {
-    const result = { title: title, data: [] };
-  
-    const items = fs.readdirSync(directory);
-  
-    items.forEach(item => {
-      const itemPath = path.join(directory, item);
-      const isDirectory = fs.statSync(itemPath).isDirectory();
-  
-      if (isDirectory) {
-        const subfolder = {
-          id: item,
-          name: item,
-          path: itemPath,
-          iconSrc: '/path/to/icon', // replace with actual path to icon
-          subfolders: createViewsTree(itemPath, item).data // recursive call for nested subfolders
-        };
-  
-        result.data.push(subfolder);
-      }
-    });
-  
-    return result;
-  }
+
 async function readDirectoryTree(location) {
   const tree = {};
   function traverseDirectory(currentPath, currentLevel) {
@@ -115,82 +59,100 @@ async function readDirectoryTree(location) {
     });
   }
   traverseDirectory(location, tree);
-  await db.collection("directoryTree").insertOne(tree);
+  await addTodb(tree); // Use addTodb function to save the tree
   console.log("Directory tree inserted into MongoDB");
 }
+
 app.use(bodyParser.json());
 app.use(express.static("videos"));
 app.use(function (err, req, res, next) {
     console.error(err.stack);
     res.status(500).send('Something broke!');
-  });
+});
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+
 app.get("/", async (req, res) => {
-  const data = createViewsTree(path.join(__dirname, "views"), "Home");
-  console.log(data);
+  const data = await Folder.find({});
   res.render("layout", {
     folder: null,
     subfolder: null,
     indexPath: null,
-    data: data.data,
+    data: data,
   });
 });
+
+app.get("/submit", async (req, res) => {
+    const folders = await Folder.find({});
+    res.render("form", { folders });
+});
+
 app.post("/submit", async (req, res) => {
   const folder = req.body.folder;
   const fileName = req.body.fileName;
   const url = req.body.url;
-  const result = await db
-    .collection("directoryTree")
-    .findOne({ [folder]: { $exists: true } });
+  const result = await Folder.findOne({ id: folder }); // Use Folder model to find the folder
   if (result) {
-    result[folder][fileName].URL = url;
-    await db
-      .collection("directoryTree")
-      .updateOne(
-        { _id: result._id },
-        { $set: { [folder]: result[folder] } }
-      );
-    res.send("URL added successfully!");
+    const subfolder = result.subfolders.find(subfolder => subfolder.id === fileName);
+    if (subfolder) {
+      subfolder.URL = url;
+      await result.save(); // Save the updated document
+      res.send("URL added successfully!");
+    } else {
+      res.status(404).send("File not found!");
+    }
   } else {
     res.status(404).send("Folder not found!");
   }
 });
+
 app.get("/sync", async (req, res) => {
-    const viewsTree = createViewsTree(path.join(__dirname, "views"), "Home");
-      
-    console.log(JSON.stringify(viewsTree, null, 2))
-  
-    res.render("layout", {
-      folder: null,
-      subfolder: null,
-      indexPath: null,
-      data: viewsTree.data,
-    });
+  const location = req.query.location;
+  if (!location) {
+    return res.status(400).send("Missing location parameter");
+  }
+  await readDirectoryTree(location);
+  const data = await Folder.find({});
+    
+  console.log(JSON.stringify(data, null, 2))
+
+  res.render("layout", {
+    folder: null,
+    subfolder: null,
+    indexPath: null,
+    data: data,
   });
+});
+
 app.get("/:folder/:subfolder?", async (req, res) => {
-    const folderName = req.params.folder;
-    const subfolderName = req.params.subfolder;
-    let indexPath = null;
-    let data = createViewsTree(path.join(__dirname, "views"), "Home").data;
-    for (let folder of data) {
-      if (folder.id === folderName) {
-        for (let subfolder of folder.subfolders) {
-          if (subfolder.id === subfolderName) {
-            data = subfolder;
-            break;
-          }
-        }
+  const location = req.query.location;
+  if (!location) {
+    return res.status(400).send("Missing location parameter");
+  }
+  await readDirectoryTree(location);
+
+  const folderName = req.params.folder;
+  const subfolderName = req.params.subfolder;
+  let indexPath = null;
+  let data = await Folder.findOne({ id: folderName });
+  if (data) {
+    if (subfolderName) {
+      data = data.subfolders.find(subfolder => subfolder.id === subfolderName);
+      if (!data) {
+        return res.status(404).send("Subfolder not found!");
       }
     }
-    console.log(data);
     res.render("layout", {
       folder: folderName,
       subfolder: subfolderName,
       indexPath: indexPath,
       data: data,
     });
-  });
+  } else {
+    res.status(404).send("Folder not found!");
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
