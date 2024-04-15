@@ -14,77 +14,93 @@
 </head>
 
 <body>
-
 	<!-- header-->
 	<%- include("../assets/ejs/header.ejs") %>
 		<!-- Navbar -->
-	<div class="grid-container">
-		<div class="flex-container">
-			<div style="display: flex;">
-				<div class="navbar" style="width: 25%;">
-				<div class="pt-30 categories-list">
-					<div class="row">
-						<div class="col col-12">
-							<div class="card-columns">
-
-								<div class="card-primary col-12 col-sm-4 col-lg-4 mr-auto p-2">
-									<div class="card-header" id="<%= folder.path %>">
-										<i class="fa-solid fa-film"></i>
-										<a title="<%= folder.name %>" href="<%= folder.path %>">
-											<h1 class="card-title">
-												<%= folder.name %>
-													<div class="pull-right">
-														<i class="fa fa-external-link"></i>
+		<div class="grid-container">
+			<div class="flex-container">
+				<div style="display: flex;">
+					<div class="navbar" style="width: 25%;">
+						<div class="pt-30 categories-list">
+							<div class="row">
+								<div class="col col-12">
+									<div class="card-columns">
+										<div class="card-primary col-12 col-sm-4 col-lg-4 mr-auto p-2">
+											<% if (folder) { %>
+												<div class="card-header" id="<%= folder.path %>">
+													<i class="fa-solid fa-film"></i>
+													<a title="<%= folder.name %>" href="<%= folder.path %>">
+														<h1 class="card-title">
+															<%= folder.name %>
+																<div class="pull-right">
+																	<i class="fa fa-external-link"></i>
+																</div>
+														</h1>
+													</a>
+													<div class="card-block">
+														<ol>
+															<% folders.forEach(folder=> { %>
+																<!--Ranking list -->
+																<li>
+																	<!--listed item -->
+																	<div class="icon">
+																		<img class="favicon" alt="" src="" width="15px"
+																			height="15px" />
+																		<a class="link" href="<%= folder.path %>">
+																			<%= folder.name %>
+																		</a>
+																		<a title="<%= folder.name %>"
+																			rel="noopener nofollow" target="_new"
+																			href="<%= folder.path %>">
+																			<i class="fa fa-external-link"></i>
+																		</a>
+																	</div>
+																</li>
+																<!--listed item END-->
+																<% }) %>
+															</ol>
+														<!--Ranking list END-->
 													</div>
-											</h1>
-										</a>
-										<div class="card-block">
-											<ol>
-												<% folders.forEach(folder=> { %>
-													<!--Ranking list -->
-													<li>
-
-														<!--listed item -->
-														<div class="icon">
-															<img class="favicon" alt="" src="" width="15px"
-																height="15px" />
-															<a class="link" href="<%= folder.path %>">
-																<%= folder.name %>
-															</a>
-															<a title="<%= folder.name %>" rel="noopener nofollow"
-																target="_new" href="<%= folder.path %>">
-																<i class="fa fa-external-link"></i>
-															</a>
-														</div>
-
-													</li>
-													<!--listed item END-->
-													<% }) %>
-											</ol>
-											<!--Ranking list END-->
-										</div>
+												</div>
+											</div>
+										<% } %>
 									</div>
 								</div>
-
 							</div>
 						</div>
 					</div>
+					
+					<div class="video-container" style="width: 75%; justify-content: flex-end;">
+						<video controls width="1080p" preload="metadata">
+							<% if (url) { %>
+								<source src="<%= url %>" type="video/mp4" />
+								<% } %>
+						</video>
+						<p>Views: <%= views %></p>
+					</div>
 				</div>
 			</div>
-			<div class="video-container" style="width: 75%; justify-content: flex-end;">
-					<video controls width="1080p" preload="metadata">
-						<% if (folder && folder.url) { %>
-							<source src="<%= folder.url %>" type="video/mp4" />
-							<% } %>
-					</video>
-				</div>
-			</div>
-		</div>
-	</div>
+			<script>
+				const videoPlayer = document.getElementById('video-player');
+				if (videoPlayer) {
+					videoPlayer.addEventListener('play', function() {
+						<% if (folder) { %>
+							fetch('/increment-view', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({ folderName: '<%= folder.name %>' }),
+							});
+						<% } %>
+					});
+				}
+			</script>
 			<!-- Brandynette footer-->
 			<%- //include("../assets/ejs/ads.ejs") %>
-			<%- include("../assets/ejs/footer.ejs") %>
-	</body>
+				<%- include("../assets/ejs/footer.ejs") %>
+</body>
+
 </html>
 <style>
 	@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@800&display=swap");
@@ -309,6 +325,7 @@
 		grid-template-columns: 1fr 1fr;
 		gap: 20px;
 	}
+
 	.flex-container {
 		display: flex;
 	}
@@ -320,5 +337,4 @@
 	.navbar {
 		width: 30%;
 	}
-
 </style>

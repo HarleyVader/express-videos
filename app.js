@@ -16,7 +16,7 @@ const rootDirectory = './views';
 console.log(`Root Directory: ${rootDirectory}`);
 
 // Connecting to MongoDB
-mongoose.connect('mongodb://172.25.117.247:27017/videoViews?directConnection=true&appName=mongosh+2.2.3')
+mongoose.connect('mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.2.3')
     .catch(err => console.error('MongoDB connection error:', err));
 
     const folderSchema = new mongoose.Schema({
@@ -90,20 +90,22 @@ app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-app.get('/', async function(req, res) {
-    const folder = await Folder.findOne({ name: 'videos' });
-    const folders = await Folder.find();
-    console.log('Folders:', folders);
-    if (!folder) {
-        return res.status(404).send('Folder not found');
+// Sync route
+app.get("/sync", async (req, res, next) => {
+    try {
+        // Call the function to add all folders to the database
+        await addFoldersToDatabase(path.join(__dirname, 'views'));
+
+        const folders = await Folder.find();
+        console.log('Folders in /sync after database sync:', folders);
+        const data = [{ name: 'Sync' }];
+        const folder = { folders: [] };
+        const subfolder = null;
+        const url = "";
+        res.render('layout', { folders, data, folder, subfolder, url });
+    } catch (error) {
+        next(error);
     }
-    const data = { 
-        folder: folder, 
-        data: { name: 'videos' }, 
-        folders: folders, 
-    };
-    console.log('Data for / route:', data);
-    res.render('layout', data);
 });
 // Route for submit page
 app.get('/submit', async (req, res, next) => {
@@ -141,12 +143,24 @@ app.post('/submit', (req, res) => {
 // Sync route
 app.get("/sync", async (req, res, next) => {
     try {
+        const viewFolders = fs.readdirSync(path.join(__dirname, 'views')); // Replace 'views' with the path to your views if necessary
+
+        for (const folderName of viewFolders) {
+            let folder = await Folder.findOne({ name: folderName });
+
+            if (!folder) {
+                folder = new Folder({ name: folderName });
+                await folder.save();
+            }
+        }
+
         const folders = await Folder.find();
         console.log('Folders in /sync after database sync:', folders);
         const data = [{ name: 'Sync' }];
         const folder = { folders: [] };
         const subfolder = null;
-        res.render('layout', { folders, data, folder, subfolder });
+        const url = "";
+        res.render('layout', { folders, data, folder, subfolder, url });
     } catch (error) {
         next(error);
     }
@@ -156,23 +170,41 @@ app.get("/sync", async (req, res, next) => {
 app.get("/:folderName/:subfolderName?", async (req, res) => {
     try {
         const { folderName, subfolderName } = req.params;
-        console.log('Folder Name:', folderName);
-        console.log('Subfolder Name:', subfolderName);
         const folder = await Folder.findOne({ name: folderName });
-        console.log('Folder:', folder);
         const subfolder = await Folder.findOne({ name: subfolderName });
-        console.log('Subfolder:', subfolder);
         const folders = await Folder.find();
-        console.log('Folders:', folders);
         const data = folders.map(folder => ({
             name: folder.name,
+            url: folder.url,
             subfolders: folder.subfolders || []
         }));
-        console.log('Data:', data);
-        res.render('layout', { folder, subfolder, folders, data: [data] });
+
+        // If subfolder exists and is not null, use its url, else use folder's url if folder is not null
+        let url = null;
+        if (subfolder && subfolder.url) {
+            url = subfolder.url;
+        } else if (folder && folder.url) {
+            url = folder.url;
+        }
+
+        // Fetch views from the database
+        const views = folder ? folder.views : 0;
+
+        res.render('layout', { folder, subfolder, folders, data: [data], url: url, views: views });
     } catch (error) {
         console.error('Error rendering layout:', error);
         res.status(500).send('Error rendering layout');
+    }
+});
+
+app.post('/increment-view', async (req, res) => {
+    const { folderName } = req.body;
+    try {
+        await Folder.updateOne({ name: folderName }, { $inc: { views: 1 } });
+        res.status(200).send('View count incremented');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error incrementing view count');
     }
 });
 
