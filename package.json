@@ -7,7 +7,7 @@
     "mongoose": "^8.3.1"
   },
   "name": "express-videos",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "melkaneas 4th attempt at express",
   "main": "app.js",
   "scripts": {
@@ -15,5 +15,20 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "melkanea",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HarleyVader/express-videos.git"
+  },
+  "keywords": [
+    "express",
+    "ejs",
+    "fs",
+    "path"
+  ],
+  "bugs": {
+    "url": "https://github.com/HarleyVader/express-videos/issues"
+  },
+  "homepage": "https://github.com/HarleyVader/express-videos#readme"
 }
