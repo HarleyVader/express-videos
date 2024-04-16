@@ -68,34 +68,40 @@
 								</div>
 							</div>
 						</div>
-					</div>
-					
+					</div>					
 					<div class="video-container" style="width: 75%; justify-content: flex-end;">
 						<video controls width="1080p" preload="metadata">
 							<% if (url) { %>
 								<source src="<%= url %>" type="video/mp4" />
 								<% } %>
 						</video>
-						<p>Views: <%= views %></p>
+						<p>Views: <%= folder.views %></p>
 					</div>
 				</div>
 			</div>
-			<script>
-				const videoPlayer = document.getElementById('video-player');
-				if (videoPlayer) {
-					videoPlayer.addEventListener('play', function() {
-						<% if (folder) { %>
-							fetch('/increment-view', {
-								method: 'POST',
-								headers: {
-									'Content-Type': 'application/json',
-								},
-								body: JSON.stringify({ folderName: '<%= folder.name %>' }),
-							});
-						<% } %>
-					});
-				}
-			</script>
+		</div>
+		<script>
+			document.addEventListener("DOMContentLoaded", function() {
+			  const video = document.querySelector("video");
+			  const folderName = "<%= folder.name %>"; // Replace this with the actual folder name
+		  
+			  video.addEventListener("play", function() {
+				fetch(`/incrementView/${folderName}`, { method: "POST" })
+				  .then(response => {
+					if (!response.ok) {
+					  throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					return response.text();
+				  })
+				  .then(data => {
+					console.log(data);
+				  })
+				  .catch(error => {
+					console.error("Error incrementing view count:", error);
+				  });
+			  });
+			});
+		  </script>
 			<!-- Brandynette footer-->
 			<%- //include("../assets/ejs/ads.ejs") %>
 				<%- include("../assets/ejs/footer.ejs") %>
